@@ -56,6 +56,7 @@ type Config struct {
 	NSName           string        `default:"xconnectns" desc:"Name of Network Service to Register with Registry"`
 	TunnelIP         net.IP        `desc:"IP to use for tunnels" split_words:"true"`
 	ConnectTo        url.URL       `default:"unix:///connect.to.socket" desc:"url to connect to" split_words:"true"`
+	RegistryURL      url.URL       `default:"tcp://nsm-registry-svc:5002" desc:"url to registry" split_words:"true"`
 	MaxTokenLifetime time.Duration `default:"24h" desc:"maximum lifetime of tokens" split_words:"true"`
 }
 
@@ -178,8 +179,9 @@ func main() {
 	now = time.Now()
 	registryCreds := credentials.NewTLS(tlsconfig.MTLSClientConfig(source, source, tlsconfig.AuthorizeAny()))
 	registryCreds = grpcfd.TransportCredentials(registryCreds)
+	logrus.Infof("NSM: Connecting to NSE registry %v", config.RegistryURL.String())
 	registryCC, err := grpc.DialContext(ctx,
-		config.ConnectTo.String(),
+		grpcutils.URLToTarget(&config.RegistryURL),
 		grpc.WithTransportCredentials(registryCreds),
 		grpc.WithBlock(),
 	)
