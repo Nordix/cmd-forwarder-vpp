@@ -54,15 +54,16 @@ import (
 
 // Config - configuration for cmd-forwarder-vpp
 type Config struct {
-	Name             string        `default:"forwarder" desc:"Name of Endpoint"`
-	NSName           string        `default:"xconnectns" desc:"Name of Network Service to Register with Registry"`
-	TunnelIP         net.IP        `desc:"IP to use for tunnels" split_words:"true"`
-	ConnectTo        url.URL       `default:"unix:///connect.to.socket" desc:"url to connect to" split_words:"true"`
-	ListenOn         url.URL       `default:"unix:///listen.on.socket" desc:"url to listen on" split_words:"true"`
-	MaxTokenLifetime time.Duration `default:"24h" desc:"maximum lifetime of tokens" split_words:"true"`
-	VppAPISocket     string        `default:"" desc:"filename of socket to connect to existing VPP instance.  If empty a VPP instance is run in forwarder" split_words:"true"`
-	VppInit          vppinit.Func  `default:"AF_PACKET" desc:"type of VPP initialization.  Must be AF_PACKET or NONE" split_words:"true"`
-	LogLevel         string        `default:"INFO" desc:"Log level" split_words:"true"`
+	Name             string            `default:"forwarder" desc:"Name of Endpoint"`
+	NSName           string            `default:"xconnectns" desc:"Name of Network Service to Register with Registry"`
+	TunnelIP         net.IP            `desc:"IP to use for tunnels" split_words:"true"`
+	ConnectTo        url.URL           `default:"unix:///connect.to.socket" desc:"url to connect to" split_words:"true"`
+	ListenOn         url.URL           `default:"unix:///listen.on.socket" desc:"url to listen on" split_words:"true"`
+	MaxTokenLifetime time.Duration     `default:"24h" desc:"maximum lifetime of tokens" split_words:"true"`
+	VppAPISocket     string            `default:"" desc:"filename of socket to connect to existing VPP instance.  If empty a VPP instance is run in forwarder" split_words:"true"`
+	VppInit          vppinit.Func      `default:"AF_PACKET" desc:"type of VPP initialization.  Must be AF_PACKET or NONE" split_words:"true"`
+	LogLevel         string            `default:"INFO" desc:"Log level" split_words:"true"`
+	Labels           map[string]string `default:"" desc:"Endpoint labels"`
 }
 
 func main() {
@@ -216,6 +217,11 @@ func main() {
 		Name:                config.Name,
 		NetworkServiceNames: []string{config.NSName},
 		Url:                 config.ListenOn.String(),
+		NetworkServiceLabels: map[string]*registryapi.NetworkServiceLabels{
+			config.NSName: {
+				Labels: config.Labels,
+			},
+		},
 	})
 	if err != nil {
 		log.FromContext(ctx).Fatalf("failed to connect to registry: %+v", err)
