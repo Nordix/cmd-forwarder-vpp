@@ -54,11 +54,12 @@ import (
 
 // Config - configuration for cmd-forwarder-vpp
 type Config struct {
-	Name             string        `default:"forwarder" desc:"Name of Endpoint"`
-	NSName           string        `default:"xconnectns" desc:"Name of Network Service to Register with Registry"`
-	TunnelIP         net.IP        `desc:"IP to use for tunnels" split_words:"true"`
-	ConnectTo        url.URL       `default:"unix:///connect.to.socket" desc:"url to connect to" split_words:"true"`
-	MaxTokenLifetime time.Duration `default:"24h" desc:"maximum lifetime of tokens" split_words:"true"`
+	Name             string            `default:"forwarder" desc:"Name of Endpoint"`
+	NSName           string            `default:"xconnectns" desc:"Name of Network Service to Register with Registry"`
+	TunnelIP         net.IP            `desc:"IP to use for tunnels" split_words:"true"`
+	ConnectTo        url.URL           `default:"unix:///connect.to.socket" desc:"url to connect to" split_words:"true"`
+	MaxTokenLifetime time.Duration     `default:"24h" desc:"maximum lifetime of tokens" split_words:"true"`
+	Labels           map[string]string `default:"" desc:"Endpoint labels"`
 }
 
 func main() {
@@ -193,7 +194,12 @@ func main() {
 	_, err = registryClient.Register(ctx, &registryapi.NetworkServiceEndpoint{
 		Name:                config.Name,
 		NetworkServiceNames: []string{config.NSName},
-		Url:                 listenOn.String(),
+		NetworkServiceLabels: map[string]*registryapi.NetworkServiceLabels{
+			config.NSName: {
+				Labels: config.Labels,
+			},
+		},
+		Url: listenOn.String(),
 	})
 	if err != nil {
 		log.FromContext(ctx).Fatalf("failed to connect to registry: %+v", err)
